@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Função do Dia — Duelo por Turnos</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <div class="eyebrow">Duelo por turnos</div>
+      <h1 class="title">Função do Dia</h1>
+      <div class="subtitle" id="connStatus">conectando…</div>
+    </header>
+
+    <section class="panel" id="setupPanel">
+      <h2>Entrar em um duelo</h2>
+      <p class="note">Um jogador cria a sala e envia o código para o outro. Cada um entra pelo seu próprio aparelho. Vocês jogam alternando turnos: em cada turno, você testa um valor de <code>x</code> <strong>ou</strong> tenta adivinhar a fórmula — assim que você joga, é a vez do outro, automaticamente.</p>
+      <div class="row">
+        <button type="button" id="createBtn">Criar sala nova</button>
+      </div>
+      <div class="divider">ou</div>
+      <form class="row" id="joinForm">
+        <input type="text" id="joinCodeInput" placeholder="CÓDIGO" maxlength="8" autocomplete="off" aria-label="Código da sala">
+        <button type="submit">Entrar</button>
+      </form>
+      <p class="inline-msg" id="setupError" hidden></p>
+    </section>
+
+    <section class="panel" id="waitingPanel" hidden>
+      <h2>Sala criada</h2>
+      <div class="room-info">
+        <span>Código:</span>
+        <span class="code-display" id="waitCodeDisplay"></span>
+        <button type="button" class="secondary" id="waitCopyBtn">Copiar código</button>
+        <span class="inline-msg" id="waitCopyMsg" hidden></span>
+      </div>
+      <p class="note">Envie esse código para o seu adversário. Assim que ele entrar, o duelo começa — você joga primeiro.</p>
+    </section>
+
+    <main class="board" id="gamePanel" hidden>
+      <section class="panel turn-panel">
+        <div class="turn-indicator" id="turnIndicator">—</div>
+        <div class="attempts-row" id="attemptsRow"></div>
+        <div id="hintChip"></div>
+      </section>
+
+      <section class="panel plot-panel">
+        <canvas id="plot" aria-label="Gráfico dos pontos testados"></canvas>
+        <form class="x-form" id="xForm">
+          <label for="xInput">x =</label>
+          <input type="text" id="xInput" inputmode="decimal" placeholder="ex: 2.5" autocomplete="off">
+          <button type="submit">Testar</button>
+          <span class="points-stat" id="pointsStat">0 pontos testados</span>
+        </form>
+      </section>
+
+      <section class="panel log-panel">
+        <h2>Pontos testados</h2>
+        <ul id="historyList"></ul>
+      </section>
+
+      <section class="panel guess-panel">
+        <h2>Tentativas de fórmula</h2>
+        <form class="guess-form" id="guessForm">
+          <input type="text" id="guessInput" placeholder="ex.: 2*x^2 - 3*x + 1" autocomplete="off" aria-label="Sua tentativa de fórmula">
+          <button type="submit">Adivinhar</button>
+        </form>
+        <div class="guess-hint">funções: sin cos tan sqrt abs exp ln log2 log10 · constantes: pi e</div>
+        <p class="inline-msg" id="turnError" hidden></p>
+        <ul id="guessLog"></ul>
+      </section>
+    </main>
+
+    <section class="panel reveal-panel" id="revealPanel" hidden>
+      <div class="status" id="revealStatus"></div>
+      <div class="reveal-formula" id="revealFormula"></div>
+      <div class="reveal-stats" id="revealStats"></div>
+      <div class="share-row">
+        <button type="button" id="rematchBtn">Jogar de novo</button>
+        <button type="button" class="secondary" id="copyResultBtn">Copiar resultado</button>
+        <span class="inline-msg" id="copyResultMsg" hidden></span>
+      </div>
+      <textarea id="shareText" readonly hidden></textarea>
+    </section>
+
+    <footer class="page-footer">Duelo por turnos — sincronizado em tempo real entre os dois aparelhos.</footer>
+  </div>
+
+  <script src="/gameLogic.js"></script>
+  <script src="/client.js"></script>
+</body>
+</html>

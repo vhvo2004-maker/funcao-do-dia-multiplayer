@@ -1,0 +1,16 @@
+{
+  "name": "funcao-do-dia-multiplayer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Duelo por turnos: adivinhe a função secreta antes do seu adversário.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
