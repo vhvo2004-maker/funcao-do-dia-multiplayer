@@ -38,6 +38,7 @@
   const guessInput = document.getElementById("guessInput");
   const guessLog = document.getElementById("guessLog");
   const turnError = document.getElementById("turnError");
+  const soloGiveUpBtn = document.getElementById("soloGiveUpBtn");
 
   const revealStatus = document.getElementById("revealStatus");
   const revealFormula = document.getElementById("revealFormula");
@@ -241,26 +242,10 @@
         solo.solved++;
         solo.streak++;
         solo.bestStreak = Math.max(solo.bestStreak, solo.streak);
-        solo.reveal = {
-          display: solo.puzzle.category.display(solo.puzzle.params),
-          categoryIndex: solo.puzzle.categoryIndex,
-          params: solo.puzzle.params
-        };
-        soloFeedback.textContent = "✓ Acertou! " + solo.reveal.display + " — próxima função já vem aí.";
-        soloFeedback.className = "inline-msg good";
-        soloFeedback.hidden = false;
-        scheduleNextSoloRound();
+        finishSoloRound("✓ Acertou! ", "good");
       } else if (solo.guesses.length >= SOLO_MAX_ATTEMPTS) {
         solo.streak = 0;
-        solo.reveal = {
-          display: solo.puzzle.category.display(solo.puzzle.params),
-          categoryIndex: solo.puzzle.categoryIndex,
-          params: solo.puzzle.params
-        };
-        soloFeedback.textContent = "Não foi dessa vez — " + solo.reveal.display + " — próxima função já vem aí.";
-        soloFeedback.className = "inline-msg";
-        soloFeedback.hidden = false;
-        scheduleNextSoloRound();
+        finishSoloRound("Não foi dessa vez — ");
       }
       renderSolo();
       return;
@@ -269,6 +254,13 @@
     lastGuessAttemptText = raw;
     sendMsg({ type: "guess", formula: raw });
     guessInput.value = "";
+  });
+
+  soloGiveUpBtn.addEventListener("click", function () {
+    if (!solo || solo.status !== "playing" || solo.reveal) return;
+    solo.streak = 0;
+    finishSoloRound("Você desistiu — ");
+    renderSolo();
   });
 
   rematchBtn.addEventListener("click", function () { sendMsg({ type: "rematch" }); });
@@ -317,6 +309,18 @@
     solo.reveal = null;
     soloFeedback.hidden = true;
     turnError.hidden = true;
+  }
+
+  function finishSoloRound(message, cssClass) {
+    solo.reveal = {
+      display: solo.puzzle.category.display(solo.puzzle.params),
+      categoryIndex: solo.puzzle.categoryIndex,
+      params: solo.puzzle.params
+    };
+    soloFeedback.textContent = message + solo.reveal.display + " — próxima função já vem aí.";
+    soloFeedback.className = "inline-msg" + (cssClass ? " " + cssClass : "");
+    soloFeedback.hidden = false;
+    scheduleNextSoloRound();
   }
 
   function scheduleNextSoloRound() {
@@ -414,6 +418,8 @@
     xForm.querySelector("button").disabled = !canAct;
     guessInput.disabled = !canAct;
     guessForm.querySelector("button").disabled = !canAct;
+    soloGiveUpBtn.hidden = false;
+    soloGiveUpBtn.disabled = !canAct;
 
     drawPlot(solo);
   }
@@ -474,6 +480,7 @@
     soloScore.hidden = true;
     turnIndicator.hidden = true;
     soloFeedback.hidden = true;
+    soloGiveUpBtn.hidden = true;
 
     if (screen === "home") { homePanel.hidden = false; return; }
     if (screen === "waiting") { waitingPanel.hidden = false; return; }
