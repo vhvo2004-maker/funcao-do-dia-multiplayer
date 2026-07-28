@@ -11,6 +11,7 @@ const {
 const PORT = process.env.PORT || 8080;
 const MAX_ATTEMPTS = 8;
 const HINT_AFTER = 3;
+const TURN_TIME_MS = Number(process.env.TURN_TIME_MS) || 30000;
 const ROOM_TTL_MS = 4 * 60 * 60 * 1000; // clean up abandoned rooms after 4h
 
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -74,12 +75,37 @@ function newRoomState(code) {
     guesses: [],
     status: "waiting", // waiting | playing | won | draw | abandoned
     winner: null,
+    turnDeadline: null,
+    turnTimerHandle: null,
     lastActivity: Date.now()
   };
 }
 
 function wrongCount(room) {
   return room.guesses.filter((g) => !g.correct).length;
+}
+
+function clearTurnTimer(room) {
+  if (room.turnTimerHandle) {
+    clearTimeout(room.turnTimerHandle);
+    room.turnTimerHandle = null;
+  }
+  room.turnDeadline = null;
+}
+
+function scheduleTurnTimer(room) {
+  clearTurnTimer(room);
+  if (room.status !== "playing") return;
+  room.turnDeadline = Date.now() + TURN_TIME_MS;
+  room.turnTimerHandle = setTimeout(() => onTurnTimeout(room), TURN_TIME_MS);
+}
+
+function onTurnTimeout(room) {
+  if (room.status !== "playing") return;
+  room.turn = 1 - room.turn;
+  room.lastActivity = Date.now();
+  scheduleTurnTimer(room);
+  broadcast(room);
 }
 
 function publicState(room, yourIndex) {
@@ -96,6 +122,8 @@ function publicState(room, yourIndex) {
     maxAttempts: MAX_ATTEMPTS,
     hintAfter: HINT_AFTER,
     hintFamily: null,
+    turnDeadline: room.status === "playing" ? room.turnDeadline : null,
+    turnTimeMs: TURN_TIME_MS,
     reveal: null
   };
   if (room.status === "playing" && wrongCount(room) >= HINT_AFTER) {
@@ -173,6 +201,7 @@ wss.on("connection", (ws) => {
       }
       if (room.players.filter((p) => p.connected).length === 2 && room.status === "waiting") {
         room.status = "playing";
+        scheduleTurnTimer(room);
       }
       room.lastActivity = Date.now();
       send(ws, { type: "joined", code: room.code, yourIndex: myIndex });
@@ -197,6 +226,7 @@ wss.on("connection", (ws) => {
       if (!room.history.find((p) => p.x === x)) room.history.push({ x, y });
       room.turn = 1 - room.turn;
       room.lastActivity = Date.now();
+      scheduleTurnTimer(room);
       broadcast(room);
       return;
     }
@@ -216,10 +246,13 @@ wss.on("connection", (ws) => {
       if (correct) {
         room.status = "won";
         room.winner = myIndex;
+        clearTurnTimer(room);
       } else if (room.guesses.length >= MAX_ATTEMPTS) {
         room.status = "draw";
+        clearTurnTimer(room);
       } else {
         room.turn = 1 - room.turn;
+        scheduleTurnTimer(room);
       }
       room.lastActivity = Date.now();
       broadcast(room);
@@ -233,6 +266,7 @@ wss.on("connection", (ws) => {
         return;
       }
       resetRoomForRematch(room);
+      scheduleTurnTimer(room);
       broadcast(room);
       return;
     }
@@ -243,6 +277,7 @@ wss.on("connection", (ws) => {
     if (room.players[myIndex]) room.players[myIndex].connected = false;
     if (room.status === "playing" || room.status === "waiting") {
       room.status = "abandoned";
+      clearTurnTimer(room);
     }
     room.lastActivity = Date.now();
     broadcast(room);
@@ -254,7 +289,10 @@ setInterval(() => {
   const now = Date.now();
   for (const [code, room] of rooms) {
     const allDisconnected = room.players.every((p) => !p.connected);
-    if (allDisconnected && now - room.lastActivity > ROOM_TTL_MS) rooms.delete(code);
+    if (allDisconnected && now - room.lastActivity > ROOM_TTL_MS) {
+      clearTurnTimer(room);
+      rooms.delete(code);
+    }
   }
 }, 30 * 60 * 1000);
 

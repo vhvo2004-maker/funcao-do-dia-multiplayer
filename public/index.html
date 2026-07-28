@@ -3,29 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Função do Dia — Duelo por Turnos</title>
+<title>Função do Dia — Solo e Duelo por Turnos</title>
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div class="page">
     <header class="site-header">
-      <div class="eyebrow">Duelo por turnos</div>
+      <div class="eyebrow">Adivinhe a função secreta</div>
       <h1 class="title">Função do Dia</h1>
       <div class="subtitle" id="connStatus">conectando…</div>
     </header>
 
-    <section class="panel" id="setupPanel">
-      <h2>Entrar em um duelo</h2>
-      <p class="note">Um jogador cria a sala e envia o código para o outro. Cada um entra pelo seu próprio aparelho. Vocês jogam alternando turnos: em cada turno, você testa um valor de <code>x</code> <strong>ou</strong> tenta adivinhar a fórmula — assim que você joga, é a vez do outro, automaticamente.</p>
-      <div class="row">
-        <button type="button" id="createBtn">Criar sala nova</button>
+    <section class="home-grid" id="homePanel">
+      <div class="panel mode-card">
+        <h2>Jogar sozinho</h2>
+        <p class="note">Resolva o máximo de funções que conseguir dentro do tempo. Cada função vale até 5 tentativas de fórmula — acertando ou esgotando as tentativas, a próxima já aparece.</p>
+        <div class="row" id="soloDurationRow">
+          <button type="button" class="duration-btn" data-seconds="60">1 min</button>
+          <button type="button" class="duration-btn active" data-seconds="180">3 min</button>
+          <button type="button" class="duration-btn" data-seconds="300">5 min</button>
+        </div>
+        <div class="row">
+          <button type="button" id="soloStartBtn">Jogar sozinho</button>
+        </div>
+        <p class="note" id="soloBestScore"></p>
       </div>
-      <div class="divider">ou</div>
-      <form class="row" id="joinForm">
-        <input type="text" id="joinCodeInput" placeholder="CÓDIGO" maxlength="8" autocomplete="off" aria-label="Código da sala">
-        <button type="submit">Entrar</button>
-      </form>
-      <p class="inline-msg" id="setupError" hidden></p>
+
+      <div class="panel mode-card">
+        <h2>Duelo por turnos</h2>
+        <p class="note">Um jogador cria a sala e envia o código para o outro. Cada um entra pelo seu próprio aparelho e joga alternando turnos: em cada turno, você testa um <code>x</code> <strong>ou</strong> tenta adivinhar a fórmula, e tem um tempo limite antes de passar a vez sozinho.</p>
+        <div class="row">
+          <button type="button" id="createBtn">Criar sala nova</button>
+        </div>
+        <div class="divider">ou</div>
+        <form class="row" id="joinForm">
+          <input type="text" id="joinCodeInput" placeholder="CÓDIGO" maxlength="8" autocomplete="off" aria-label="Código da sala">
+          <button type="submit">Entrar</button>
+        </form>
+        <p class="inline-msg" id="setupError" hidden></p>
+      </div>
     </section>
 
     <section class="panel" id="waitingPanel" hidden>
@@ -41,9 +57,14 @@
 
     <main class="board" id="gamePanel" hidden>
       <section class="panel turn-panel">
-        <div class="turn-indicator" id="turnIndicator">—</div>
+        <div class="turn-status-row">
+          <div class="turn-indicator" id="turnIndicator">—</div>
+          <div class="turn-timer" id="turnTimer" hidden>0:30</div>
+          <div class="solo-score" id="soloScore" hidden>Resolvidas: 0</div>
+        </div>
         <div class="attempts-row" id="attemptsRow"></div>
         <div id="hintChip"></div>
+        <p class="inline-msg good" id="soloFeedback" hidden></p>
       </section>
 
       <section class="panel plot-panel">
@@ -82,10 +103,22 @@
         <button type="button" class="secondary" id="copyResultBtn">Copiar resultado</button>
         <span class="inline-msg" id="copyResultMsg" hidden></span>
       </div>
-      <textarea id="shareText" readonly hidden></textarea>
+      <textarea id="shareText" class="share-textarea" readonly hidden></textarea>
     </section>
 
-    <footer class="page-footer">Duelo por turnos — sincronizado em tempo real entre os dois aparelhos.</footer>
+    <section class="panel reveal-panel" id="soloEndPanel" hidden>
+      <div class="status" id="soloEndStatus">Tempo esgotado!</div>
+      <div class="reveal-stats" id="soloEndStats"></div>
+      <div class="share-row">
+        <button type="button" id="soloAgainBtn">Jogar de novo</button>
+        <button type="button" class="secondary" id="soloMenuBtn">Escolher outra duração</button>
+        <button type="button" class="secondary" id="soloCopyBtn">Copiar resultado</button>
+        <span class="inline-msg" id="soloCopyMsg" hidden></span>
+      </div>
+      <textarea id="soloShareText" class="share-textarea" readonly hidden></textarea>
+    </section>
+
+    <footer class="page-footer">Sozinho contra o relógio, ou em duelo sincronizado em tempo real entre dois aparelhos.</footer>
   </div>
 
   <script src="/gameLogic.js"></script>

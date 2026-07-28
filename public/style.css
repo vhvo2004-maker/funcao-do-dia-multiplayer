@@ -167,6 +167,30 @@ button.secondary { background: transparent; color: var(--ink); border-color: var
   color: var(--accent);
 }
 
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+@media (max-width: 640px) {
+  .home-grid { grid-template-columns: 1fr; }
+}
+.mode-card { margin-bottom: 0; }
+.mode-card h2 { font-size: 1.05rem; text-transform: none; letter-spacing: normal; font-family: var(--font-display); color: var(--ink); }
+
+.duration-btn {
+  background: transparent;
+  color: var(--ink-muted);
+  border-color: var(--border);
+  font-weight: 600;
+}
+.duration-btn.active {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+}
+
 .room-info { display: flex; gap: 0.7rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.8rem; }
 .code-display {
   font-family: var(--font-mono);
@@ -180,7 +204,9 @@ button.secondary { background: transparent; color: var(--ink); border-color: var
 }
 
 .turn-panel { display: flex; flex-direction: column; gap: 0.7rem; }
+.turn-status-row { display: flex; gap: 0.6rem; align-items: stretch; }
 .turn-indicator {
+  flex: 1;
   font-family: var(--font-display);
   font-size: 1.4rem;
   text-align: center;
@@ -190,6 +216,38 @@ button.secondary { background: transparent; color: var(--ink); border-color: var
 }
 .turn-indicator.yours { color: var(--good); background: var(--good-soft); }
 .turn-indicator.theirs { color: var(--ink-muted); }
+
+.turn-timer {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--ink-muted);
+  min-width: 4rem;
+}
+.turn-timer.low { color: var(--accent); background: var(--accent-soft); }
+
+.solo-score {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius);
+  background: var(--good-soft);
+  color: var(--good);
+  white-space: nowrap;
+}
+
+.inline-msg.good { color: var(--good); }
 
 .attempts-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .attempt-box {
@@ -260,7 +318,7 @@ button.secondary { background: transparent; color: var(--ink); border-color: var
 }
 .reveal-stats { font-size: 0.85rem; color: var(--ink-muted); margin-bottom: 0.8rem; }
 .share-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
-textarea#shareText {
+.share-textarea {
   width: 100%; margin-top: 0.6rem;
   font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-muted);
   background: var(--surface); border: 1px solid var(--border);
