@@ -48,6 +48,7 @@
   const shareText = document.getElementById("shareText");
 
   const soloEndStatus = document.getElementById("soloEndStatus");
+  const soloEndFormula = document.getElementById("soloEndFormula");
   const soloEndStats = document.getElementById("soloEndStats");
   const soloAgainBtn = document.getElementById("soloAgainBtn");
   const soloMenuBtn = document.getElementById("soloMenuBtn");
@@ -64,6 +65,20 @@
   let selectedDuration = 180;
   let solo = null;
   let soloRoundTimeout = null;
+  let lastGuessAttemptText = "";
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function logInvalidAttempt(text) {
+    const li = document.createElement("li");
+    li.className = "wrong";
+    li.innerHTML = "<span class=\"mark\">?</span><span class=\"txt\">" + escapeHtml(text) + " — não entendi essa expressão</span>";
+    guessLog.appendChild(li);
+  }
 
   const SOLO_MAX_ATTEMPTS = 5;
   const SOLO_HINT_AFTER = 2;
@@ -112,6 +127,7 @@
     if (msg.type === "guessError") {
       turnError.textContent = msg.message;
       turnError.hidden = false;
+      if (msg.kind === "guess") logInvalidAttempt(lastGuessAttemptText);
       return;
     }
     if (msg.type === "state") {
@@ -215,6 +231,7 @@
       catch (err) {
         turnError.textContent = "Não entendi essa expressão.";
         turnError.hidden = false;
+        logInvalidAttempt(raw);
         return;
       }
       const correct = GameLogic.guessMatches(tree, solo.puzzle);
@@ -249,6 +266,7 @@
       return;
     }
 
+    lastGuessAttemptText = raw;
     sendMsg({ type: "guess", formula: raw });
     guessInput.value = "";
   });
@@ -318,14 +336,32 @@
     if (soloRoundTimeout) { clearTimeout(soloRoundTimeout); soloRoundTimeout = null; }
     const isNewBest = solo.solved > getBestScore(solo.durationSeconds);
     saveBestScore(solo.durationSeconds, solo.solved);
+
+    // if time ran out mid-round (round wasn't solved/exhausted yet), reveal what it was
+    if (solo.puzzle && !solo.reveal) {
+      solo.reveal = {
+        display: solo.puzzle.category.display(solo.puzzle.params),
+        categoryIndex: solo.puzzle.categoryIndex,
+        params: solo.puzzle.params
+      };
+    }
+
     showScreen("soloEnd");
     soloEndStatus.textContent = "Tempo esgotado!";
     soloEndStatus.className = "status";
+    soloEndFormula.textContent = solo.reveal ? ("Última função: " + solo.reveal.display) : "";
     soloEndStats.textContent = solo.solved + (solo.solved === 1 ? " função resolvida" : " funções resolvidas") +
       " · melhor sequência: " + solo.bestStreak +
       (isNewBest ? " · novo recorde!" : "");
     soloCopyMsg.hidden = true;
     soloShareText.hidden = true;
+
+    xInput.disabled = true;
+    xForm.querySelector("button").disabled = true;
+    guessInput.disabled = true;
+    guessForm.querySelector("button").disabled = true;
+
+    drawPlot(solo);
   }
 
   soloStartBtn.addEventListener("click", function () {
@@ -585,6 +621,7 @@
     const inkFaint = style.getPropertyValue("--ink-faint").trim();
     const pointColor = style.getPropertyValue("--point-color").trim();
     const accent = style.getPropertyValue("--accent").trim();
+    const guessCurveColor = style.getPropertyValue("--guess-curve").trim();
 
     const padL = 42, padR = 14, padT = 14, padB = 26;
     const plotW = cssW - padL - padR, plotH = cssH - padT - padB;
@@ -629,22 +666,36 @@
       ctx.beginPath(); ctx.moveTo(px, padT); ctx.lineTo(px, padT + plotH); ctx.stroke();
     }
 
-    if (state.reveal) {
-      const rp = GameLogic.puzzleFromCategoryIndex(state.reveal.categoryIndex, state.reveal.params, []);
-      ctx.strokeStyle = accent;
-      ctx.lineWidth = 2.4;
+    function strokeCurve(evalFn, color, dashed) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = dashed ? 1.6 : 2.4;
+      ctx.setLineDash(dashed ? [5, 4] : []);
       ctx.beginPath();
       let started = false;
-      const steps = 400;
+      const steps = 300;
       for (let i = 0; i <= steps; i++) {
         const x = xMin + (i / steps) * (xMax - xMin);
         let y;
-        try { y = rp.category.evaluate(rp.params, x); } catch (e) { y = NaN; }
+        try { y = evalFn(x); } catch (e) { y = NaN; }
         if (!isFinite(y) || y < yMin - (yMax - yMin) || y > yMax + (yMax - yMin)) { started = false; continue; }
         const px = sx(x), py = sy(y);
         if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
       }
       ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // one dashed curve per wrong guess, so you can see how each attempt compares to the data
+    state.guesses.forEach(function (g) {
+      if (g.correct) return;
+      let tree;
+      try { tree = GameLogic.parseExpr(g.text); } catch (e) { return; }
+      strokeCurve(function (x) { return GameLogic.evalNode(tree, x); }, guessCurveColor, true);
+    });
+
+    if (state.reveal) {
+      const rp = GameLogic.puzzleFromCategoryIndex(state.reveal.categoryIndex, state.reveal.params, []);
+      strokeCurve(function (x) { return rp.category.evaluate(rp.params, x); }, accent, false);
     }
 
     state.history.forEach(function (p) {

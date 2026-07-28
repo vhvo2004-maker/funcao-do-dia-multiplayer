@@ -12,6 +12,7 @@
   --good: #1F7A54;
   --good-soft: #DDEEE4;
   --point-color: #24344A;
+  --guess-curve: #8A94A6;
   --border: #D8DED9;
   --shadow: 0 1px 0 rgba(30,42,56,0.04), 0 8px 24px -16px rgba(30,42,56,0.25);
   --radius: 3px;
@@ -35,6 +36,7 @@
     --good: #5FCB94;
     --good-soft: #1E3A2C;
     --point-color: #E7EAEE;
+    --guess-curve: #7C8B99;
     --border: #2C3B49;
     --shadow: 0 1px 0 rgba(0,0,0,0.2), 0 8px 28px -16px rgba(0,0,0,0.6);
   }

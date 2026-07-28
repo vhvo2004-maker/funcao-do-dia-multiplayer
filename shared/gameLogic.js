@@ -214,7 +214,7 @@
         i = j;
       } else if (/[a-z_]/.test(c)) {
         let j = i;
-        while (j < s.length && /[a-z_]/.test(s[j])) j++;
+        while (j < s.length && /[a-z0-9_]/.test(s[j])) j++;
         tokens.push({ type: "ident", value: s.slice(i, j) });
         i = j;
       } else if ("+-*/^(),".includes(c)) {

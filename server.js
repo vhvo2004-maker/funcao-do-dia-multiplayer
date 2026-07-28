@@ -215,12 +215,12 @@ wss.on("connection", (ws) => {
       if (room.status !== "playing" || room.turn !== myIndex) return;
       const x = Number(msg.x);
       if (!isFinite(x) || x < -10 || x > 10) {
-        send(ws, { type: "guessError", message: "Escolha x entre -10 e 10." });
+        send(ws, { type: "guessError", kind: "x", message: "Escolha x entre -10 e 10." });
         return;
       }
       const y = room.puzzle.category.evaluate(room.puzzle.params, x);
       if (!isFinite(y)) {
-        send(ws, { type: "guessError", message: "f(x) não está definida nesse ponto. Sua vez continua." });
+        send(ws, { type: "guessError", kind: "x", message: "f(x) não está definida nesse ponto. Sua vez continua." });
         return;
       }
       if (!room.history.find((p) => p.x === x)) room.history.push({ x, y });
@@ -238,7 +238,7 @@ wss.on("connection", (ws) => {
       let tree;
       try { tree = parseExpr(raw); }
       catch (e) {
-        send(ws, { type: "guessError", message: "Não entendi essa expressão. Sua vez continua." });
+        send(ws, { type: "guessError", kind: "guess", message: "Não entendi essa expressão. Sua vez continua." });
         return;
       }
       const correct = guessMatches(tree, room.puzzle);
